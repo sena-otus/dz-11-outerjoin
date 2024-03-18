@@ -17,10 +17,12 @@ public:
   void start();
 private:
   void do_read();
+  void do_write();
 
   boost::asio::ip::tcp::socket m_socket;
   enum { max_length = 1024 };
   std::array<char, max_length> m_data;
   SimpleDB m_simpledb;
   AccuLine m_acculine;
+  std::string m_reply;
 };

@@ -20,37 +20,37 @@ std::string
 SimpleDB::insert(const PCommand &cmd)
 {
   if(cmd.size() < 3) {
-    return "ERR недосаточно параметров";
+    return "ERR недостаточно параметров\n";
   }
   int id = 0;
   try {
     id = std::stoi(cmd.arg(2));
   } catch (std::exception &ex) {
-    return "ERR не могу конвертировать '"+cmd.arg(2)+"' в int";
+    return "ERR не могу конвертировать '"+cmd.arg(2)+"' в int\n";
   }
   auto tit = m_table.find(cmd.arg(1));
   if(tit == m_table.end()) {
-    return "ERR таблица '"+cmd.arg(1)+"' не найдена";
+    return "ERR таблица '"+cmd.arg(1)+"' не найдена\n";
   }
   if(tit->second.find(id) != tit->second.end()){
-    return "ERR дупликат "+cmd.arg(2);
+    return "ERR дупликат "+cmd.arg(2)+"\n";
   }
   tit->second[id] = cmd.arg(3);
-  return "OK";
+  return "OK\n";
 }
 
 std::string
 SimpleDB::truncate(const PCommand &cmd)
 {
   if(cmd.size() < 2) {
-    return "ERR недосаточно параметров";
+    return "ERR недосаточно параметров\n";
   }
   auto tit = m_table.find(cmd.arg(1));
   if(tit == m_table.end()) {
-    return "ERR таблица '"+cmd.arg(1)+"' не найдена";
+    return "ERR таблица '"+cmd.arg(1)+"' не найдена\n";
   }
   tit->second.clear();
-  return "OK";
+  return "OK\n";
 }
 
 std::string
@@ -67,7 +67,7 @@ SimpleDB::intersection(const PCommand & /*cmd*/)
       result += std::to_string(row.first)+","+row.second+","+bit->second+"\n";
     }
   }
-  result += "OK";
+  result += "OK\n";
   return result;
 }
 
@@ -93,7 +93,7 @@ SimpleDB::sym_diff(const PCommand & /*cmd*/)
       result += std::to_string(row.first)+",,"+row.second+"\n";
     }
   }
-  result += "OK";
+  result += "OK\n";
   return result;
 }
 
@@ -102,12 +102,12 @@ SimpleDB::exec(std::string_view cmdbuf)
 {
   PCommand cmd(cmdbuf);
   if(cmd.size() == 0) {
-    return "OK";
+    return "OK\n";
   }
   const auto cmdU = boost::to_upper_copy<std::string>(cmd.arg(0));
   auto cmdit = m_cmdmap.find(cmdU);
   if(cmdit == m_cmdmap.end()) {
-    return "ERR неизвестная команда '" + cmd.arg(0) + "'";
+    return "ERR неизвестная команда '" + cmd.arg(0) + "'\n";
   }
   return cmdit->second(cmd);
 }
