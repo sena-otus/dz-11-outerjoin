@@ -2,6 +2,7 @@
 #include "pcommand.h"
 #include <boost/algorithm/string.hpp>
 #include <exception>
+#include <sstream>
 #include <string>
 #include <unistd.h>
 
@@ -51,7 +52,7 @@ SimpleDB::truncate(const PCommand &cmd)
 std::string
 SimpleDB::intersection(const PCommand & /*cmd*/)
 {
-  std::string result;
+  std::ostringstream result;
   const auto& A = m_table["A"];
   const auto& B = m_table["B"];
   for(auto && row : A)
@@ -59,17 +60,17 @@ SimpleDB::intersection(const PCommand & /*cmd*/)
     auto bit = B.find(row.first);
     if(bit !=  B.end())
     {
-      result += std::to_string(row.first)+","+row.second+","+bit->second+"\n";
+      result << row.first << "," << row.second << "," << bit->second << "\n";
     }
   }
-  result += "OK\n";
-  return result;
+  result << "OK\n";
+  return result.str();
 }
 
 std::string
 SimpleDB::sym_diff(const PCommand & /*cmd*/)
 {
-  std::string result;
+  std::ostringstream result;
   const auto& A = m_table["A"];
   const auto& B = m_table["B"];
   for(auto && row : A)
@@ -77,7 +78,7 @@ SimpleDB::sym_diff(const PCommand & /*cmd*/)
     auto bit = B.find(row.first);
     if(bit ==  B.end())
     {
-      result += std::to_string(row.first)+","+row.second+",\n";
+      result << row.first << "," << row.second << ",\n";
     }
   }
   for(auto && row : B)
@@ -85,11 +86,11 @@ SimpleDB::sym_diff(const PCommand & /*cmd*/)
     auto ait = A.find(row.first);
     if(ait ==  A.end())
     {
-      result += std::to_string(row.first)+",,"+row.second+"\n";
+      result << std::to_string(row.first) << ",," << row.second << "\n";
     }
   }
-  result += "OK\n";
-  return result;
+  result << "OK\n";
+  return result.str();
 }
 
 std::string
