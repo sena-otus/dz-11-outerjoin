@@ -1,5 +1,6 @@
 #pragma once
 
+#include "simpledb.h"
 #include <utility>
 #include <boost/asio.hpp>
 
@@ -20,4 +21,5 @@ private:
   void do_accept();
 
   boost::asio::ip::tcp::acceptor m_acceptor;
+  SimpleDB m_simpledb;
 };

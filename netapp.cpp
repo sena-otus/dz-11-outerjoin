@@ -17,7 +17,7 @@ void NetApp::do_accept()
       {
         if (!ec)
         {
-          std::make_shared<session>(std::move(socket))->start();
+          std::make_shared<session>(std::move(socket), m_simpledb)->start();
         }
 
         do_accept();

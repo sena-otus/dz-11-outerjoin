@@ -1,11 +1,12 @@
 #include "session.h"
+#include "simpledb.h"
 
 #include <iostream>
 
 using boost::asio::ip::tcp;
 
-session::session(tcp::socket socket)
-  : m_socket(std::move(socket)), m_data{0}
+session::session(tcp::socket socket, SimpleDB &simpledb)
+  : m_socket(std::move(socket)), m_data{0}, m_simpledb(simpledb)
 {
 }
 
@@ -15,6 +16,7 @@ void session::start()
   do_read();
 }
 
+//NOLINTBEGIN(misc-no-recursion)
 void session::do_read()
 {
   std::optional<std::string> cmd = m_acculine.getNextCmd();
@@ -50,3 +52,4 @@ void session::do_write()
         do_read();
       });
 }
+//NOLINTEND(misc-no-recursion)
