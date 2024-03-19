@@ -6,7 +6,7 @@
 #include <string_view>
 #include <functional>
 
-/** простейшая СУБД */
+/** @brief простейшая СУБД */
 class SimpleDB
 {
 public:
