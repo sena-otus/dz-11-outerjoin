@@ -3,7 +3,7 @@ find_package(GTest REQUIRED)
 enable_testing()
 
 
-add_executable(gtest_outerjoin gtest_outerjoin.cpp)
+add_executable(gtest_outerjoin gtest_outerjoin.cpp ../simpledb.cpp ../pcommand.cpp)
 
 set_target_properties(gtest_outerjoin PROPERTIES
   CXX_STANDARD 20
