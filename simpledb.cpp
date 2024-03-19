@@ -11,8 +11,6 @@ SimpleDB::SimpleDB()
   m_cmdmap["TRUNCATE"            ] = [this](const PCommand &cmd){return truncate    (cmd);};
   m_cmdmap["INTERSECTION"        ] = [this](const PCommand &cmd){return intersection(cmd);};
   m_cmdmap["SYMMETRIC_DIFFERENCE"] = [this](const PCommand &cmd){return sym_diff    (cmd);};
-  m_table["A"];
-  m_table["B"];
 }
 
 
@@ -28,14 +26,11 @@ SimpleDB::insert(const PCommand &cmd)
   } catch (std::exception &ex) {
     return "ERR не могу конвертировать '"+cmd.arg(2)+"' в int\n";
   }
-  auto tit = m_table.find(cmd.arg(1));
-  if(tit == m_table.end()) {
-    return "ERR таблица '"+cmd.arg(1)+"' не найдена\n";
-  }
-  if(tit->second.find(id) != tit->second.end()){
+  auto &table = m_table[cmd.arg(1)];
+  if(table.find(id) != table.end()){
     return "ERR дупликат "+cmd.arg(2)+"\n";
   }
-  tit->second[id] = cmd.arg(3);
+  table[id] = cmd.arg(3);
   return "OK\n";
 }
 

@@ -16,6 +16,7 @@ public:
   NetApp(boost::asio::io_context& io_context, unsigned short port);
 
 private:
+    /** принять соединение и создать tcp сессию @see class session */
   void do_accept();
 
   boost::asio::ip::tcp::acceptor m_acceptor;
