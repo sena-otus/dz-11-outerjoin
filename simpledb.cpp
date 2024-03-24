@@ -2,6 +2,7 @@
 #include "pcommand.h"
 #include <boost/algorithm/string.hpp>
 #include <exception>
+#include <mutex>
 #include <sstream>
 #include <string>
 #include <unistd.h>
@@ -12,6 +13,38 @@ SimpleDB::SimpleDB()
   m_cmdmap["TRUNCATE"            ] = [this](const PCommand &cmd){return truncate    (cmd);};
   m_cmdmap["INTERSECTION"        ] = [this](const PCommand &cmd){return intersection(cmd);};
   m_cmdmap["SYMMETRIC_DIFFERENCE"] = [this](const PCommand &cmd){return sym_diff    (cmd);};
+  m_table["A"];  // create table A
+  m_table["B"];  // create table B
+}
+
+SimpleDB::Table::index_t SimpleDB::Table::index()
+{
+  index_t index;
+  for(const auto &rec : m_reclist) {
+    index[rec.m_id] = &(rec);
+  }
+  return index;
+}
+
+
+std::string SimpleDB::Table::insert(Record &&rec)
+{
+  const std::lock_guard<std::mutex> guard(m_insMutex);
+  for(const auto &reci : m_reclist) {
+    if(reci.m_id == rec.m_id) {
+    return "ERR дупликат "+std::to_string(rec.m_id)+"\n";
+    }
+  }
+  m_reclist.emplace_front(rec);
+  return "OK\n";
+}
+
+std::string SimpleDB::Table::truncate()
+{
+    // prevent any access
+  const std::scoped_lock lock(m_insMutex, m_selMutex);
+  m_reclist.clear();
+  return "OK\n";
 }
 
 
@@ -27,12 +60,12 @@ SimpleDB::insert(const PCommand &cmd)
   } catch (std::exception &ex) {
     return "ERR не могу конвертировать '"+cmd.arg(2)+"' в int\n";
   }
-  auto &table = m_table[cmd.arg(1)];
-  if(table.find(id) != table.end()){
-    return "ERR дупликат "+cmd.arg(2)+"\n";
+  auto tit = m_table.find(cmd.arg(1));
+  if(tit == m_table.end()) {
+    return "ERR таблица '"+cmd.arg(1)+"' не найдена\n";
   }
-  table[id] = cmd.arg(3);
-  return "OK\n";
+  auto &table = tit->second;
+  return table.insert(Record{id, cmd.arg(3)});
 }
 
 std::string
@@ -45,22 +78,35 @@ SimpleDB::truncate(const PCommand &cmd)
   if(tit == m_table.end()) {
     return "ERR таблица '"+cmd.arg(1)+"' не найдена\n";
   }
-  tit->second.clear();
-  return "OK\n";
+  return tit->second.truncate();
 }
 
 std::string
 SimpleDB::intersection(const PCommand & /*cmd*/)
 {
   std::ostringstream result;
-  const auto& A = m_table["A"];
-  const auto& B = m_table["B"];
-  for(auto && row : A)
+  auto& A = m_table["A"];
+  auto& B = m_table["B"];
+  Table::index_t Aindex;
+  Table::index_t Bindex;
+
+    // запретить только truncate, но разрешён insert и доступ для чтения
+  std::shared_lock Alock(A.selMutex(), std::defer_lock);
+  std::shared_lock Block(B.selMutex(), std::defer_lock);
+  const std::scoped_lock lockall(Alock, Block);
+
   {
-    auto bit = B.find(row.first);
-    if(bit !=  B.end())
-    {
-      result << row.first << "," << row.second << "," << bit->second << "\n";
+      // эксклюзивный доступ:
+    const std::scoped_lock lock(A.insMutex(), B.insMutex());
+      // копируем индексы, чтобы не зависеть от insert
+    Aindex = A.index();
+    Bindex = B.index();
+  }
+
+  for(const auto & ait : Aindex) {
+    auto bit = Bindex.find(ait.first);
+    if(bit != Bindex.end()) {
+      result << ait.first << "," << ait.second->m_str << "," << bit->second->m_str << "\n";
     }
   }
   result << "OK\n";
@@ -71,22 +117,36 @@ std::string
 SimpleDB::sym_diff(const PCommand & /*cmd*/)
 {
   std::ostringstream result;
-  const auto& A = m_table["A"];
-  const auto& B = m_table["B"];
-  for(auto && row : A)
+  auto& A = m_table["A"];
+  auto& B = m_table["B"];
+
+  Table::index_t Aindex;
+  Table::index_t Bindex;
+
+    // запретить только truncate, но разрешён insert и доступ для чтения
+  std::shared_lock Alock(A.selMutex(), std::defer_lock);
+  std::shared_lock Block(B.selMutex(), std::defer_lock);
+  const std::scoped_lock insert_lock(Alock, Block);
+
   {
-    auto bit = B.find(row.first);
-    if(bit ==  B.end())
-    {
-      result << row.first << "," << row.second << ",\n";
+      // запретить insert и truncate:
+    const std::scoped_lock exclusive_lock(A.insMutex(), B.insMutex());
+      // копируем индексы, чтобы не зависеть от insert
+    Aindex = A.index();
+    Bindex = B.index();
+  }
+
+
+  for(const auto & ait : Aindex) {
+    auto bit = Bindex.find(ait.first);
+    if(bit == Bindex.end()) {
+      result << ait.first << "," << ait.second->m_str << ",\n";
     }
   }
-  for(auto && row : B)
-  {
-    auto ait = A.find(row.first);
-    if(ait ==  A.end())
-    {
-      result << std::to_string(row.first) << ",," << row.second << "\n";
+  for(const auto & bit : Bindex) {
+    auto ait = Aindex.find(bit.first);
+    if(ait == Aindex.end()) {
+      result << bit.first << ",," << bit.second->m_str << "\n";
     }
   }
   result << "OK\n";

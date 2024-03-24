@@ -5,10 +5,44 @@
 #include <string>
 #include <string_view>
 #include <functional>
+#include <forward_list>
+#include <set>
+#include <mutex>
+#include <shared_mutex>
 
 /** @brief простейшая СУБД */
 class SimpleDB
 {
+  struct Record
+  {
+    int m_id;
+    std::string m_str;
+  };
+
+  class Table
+  {
+    using container_t = std::forward_list<Record>;
+    using iterator = container_t::iterator;
+  public:
+    using const_iterator = container_t::const_iterator;
+    using index_t = std::unordered_map<int, const Record*>;
+
+    std::string insert(Record &&rec);
+    std::string truncate();
+    // [[nodiscard]] iterator begin() {return m_reclist.begin();}
+    // [[nodiscard]] iterator end() {return m_reclist.end();}
+    [[nodiscard]] const_iterator cbegin() const {return m_reclist.cbegin();}
+    [[nodiscard]] const_iterator cend() const {return m_reclist.cend();}
+    std::shared_mutex& selMutex() { return m_selMutex;}
+    std::mutex& insMutex() { return m_insMutex;}
+    index_t index();
+  private:
+    std::mutex m_insMutex;
+    std::shared_mutex m_selMutex;
+    container_t m_reclist; ///!< список позвляет добавлять без инвалидации итераторов
+  };
+
+
 public:
 
     /** регистрирует доступные команды */
@@ -34,6 +68,6 @@ public:
   std::string sym_diff(const PCommand &cmd);
 
 private:
-  std::map<std::string, std::map<int, std::string>> m_table;
+  std::map<std::string, Table> m_table;
   std::map<std::string, std::function<std::string(PCommand&)>> m_cmdmap;
 };
