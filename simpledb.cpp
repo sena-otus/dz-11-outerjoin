@@ -12,30 +12,30 @@ SimpleDB::SimpleDB()
   m_cmdmap["INSERT"              ] = [this](const PCommand &cmd){return insert      (cmd);};
   m_cmdmap["TRUNCATE"            ] = [this](const PCommand &cmd){return truncate    (cmd);};
   m_cmdmap["INTERSECTION"        ] = [this](const PCommand &cmd){return intersection(cmd);};
-  m_cmdmap["SYMMETRIC_DIFFERENCE"] = [this](const PCommand &cmd){return sym_diff    (cmd);};
+  m_cmdmap["SYMMETRIC_DIFFERENCEw"] = [this](const PCommand &cmd){return sym_diff    (cmd);};
   m_table["A"];  // create table A
   m_table["B"];  // create table B
 }
 
-SimpleDB::Table::index_t SimpleDB::Table::index()
+SimpleDB::Table::index_t& SimpleDB::Table::index()
 {
-  index_t index;
-  for(const auto &rec : m_reclist) {
-    index[rec.m_id] = &(rec);
-  }
-  return index;
+  // index_t index;
+  // for(const auto &rec : m_reclist) {
+  //   index[rec.m_id] = &(rec);
+  // }
+  return m_index;
 }
 
 
 std::string SimpleDB::Table::insert(Record &&rec)
 {
   const std::lock_guard<std::mutex> guard(m_insMutex);
-  for(const auto &reci : m_reclist) {
-    if(reci.m_id == rec.m_id) {
+  auto &ref = m_reclist.emplace_front(rec);
+  auto rez = m_index.insert(std::pair(ref.m_id, &ref));
+  if(!rez.second) {
+    m_reclist.erase_after(m_reclist.before_begin()); // удалить только что вставленный (первый)
     return "ERR дупликат "+std::to_string(rec.m_id)+"\n";
-    }
   }
-  m_reclist.emplace_front(rec);
   return "OK\n";
 }
 
@@ -44,6 +44,7 @@ std::string SimpleDB::Table::truncate()
     // prevent any access
   const std::scoped_lock lock(m_insMutex, m_selMutex);
   m_reclist.clear();
+  m_index.clear();
   return "OK\n";
 }
 
