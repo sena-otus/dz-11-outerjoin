@@ -31,7 +31,7 @@ class SimpleDB
       // using iterator = container_t::iterator;
   public:
     using const_iterator = container_t::const_iterator; //<! итератор по таблице
-    using index_t = std::unordered_map<int, const Record*>; //<! индекс хранит указатель на запись
+    using index_t = std::map<int, const Record*>; //<! индекс хранит указатель на запись
 
       /** @brief вставка новой записи.
        * может исполнятся параллельно с запросами INTERSECTION,
