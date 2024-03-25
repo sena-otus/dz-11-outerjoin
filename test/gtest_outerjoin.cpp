@@ -12,7 +12,7 @@ using std::string;
 
 // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
 
-TEST(simpledb, input1) {
+TEST(simpledb, inputAB) {
   {
     SimpleDB sdb;
 
@@ -51,6 +51,38 @@ TEST(simpledb, input1) {
               "6,,flour\n"
               "7,,wonder\n"
               "8,,selection\n"
+              "OK\n");
+  }
+}
+
+TEST(simpledb, inputBA) {
+  {
+    SimpleDB sdb;
+    EXPECT_EQ(sdb.exec("INSERT B 0 lean"      ), "OK\n");
+    EXPECT_EQ(sdb.exec("INSERT B 0 understand"), "ERR дупликат 0\n");
+    EXPECT_EQ(sdb.exec("INSERT B 1 sweater"   ), "OK\n");
+    EXPECT_EQ(sdb.exec("INSERT B 2 frank"     ), "OK\n");
+    EXPECT_EQ(sdb.exec("INSERT B 3 violation" ), "OK\n");
+    EXPECT_EQ(sdb.exec("INSERT B 4 quality"   ), "OK\n");
+    EXPECT_EQ(sdb.exec("INSERT B 5 precision" ), "OK\n");
+    EXPECT_EQ(sdb.exec("INSERT A 3 proposal"), "OK\n");
+    EXPECT_EQ(sdb.exec("INSERT A 4 example"), "OK\n");
+    EXPECT_EQ(sdb.exec("INSERT A 5 lake"), "OK\n");
+    EXPECT_EQ(sdb.exec("INSERT A 6 flour"     ), "OK\n");
+    EXPECT_EQ(sdb.exec("INSERT A 7 wonder"), "OK\n");
+    EXPECT_EQ(sdb.exec("INSERT A 8 selection"), "OK\n");
+    EXPECT_EQ(sdb.exec("INTERSECTION"),
+              "3,proposal,violation\n"
+              "4,example,quality\n"
+              "5,lake,precision\n"
+              "OK\n");
+    EXPECT_EQ(sdb.exec("SYMMETRIC_DIFFERENCE"),
+              "0,,lean\n"
+              "1,,sweater\n"
+              "2,,frank\n"
+              "6,flour,\n"
+              "7,wonder,\n"
+              "8,selection,\n"
               "OK\n");
   }
 }

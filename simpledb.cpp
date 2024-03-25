@@ -139,18 +139,38 @@ SimpleDB::sym_diff(const PCommand & /*cmd*/)
     Bindex = B.index();
   }
 
+    // общий цикл (а не два) чтобы отсорировать по id
+  auto ait = Aindex.cbegin();
+  auto bit = Bindex.cbegin();
+  auto diffA = [&Bindex, &ait, &result]() {
+    auto curit = Bindex.find(ait->first);
+    if(curit == Bindex.end()) {
+      result << ait->first << "," << ait->second->m_str << ",\n";
+    }
+    ait++;
+  };
+  auto diffB = [&Aindex, &bit, &result]() {
+    auto curit = Aindex.find(bit->first);
+    if(curit == Aindex.end()) {
+      result << bit->first << ",," << bit->second->m_str << "\n";
+    }
+    bit++;
+  };
 
-  for(const auto & ait : Aindex) {
-    auto bit = Bindex.find(ait.first);
-    if(bit == Bindex.end()) {
-      result << ait.first << "," << ait.second->m_str << ",\n";
+
+  while(true)
+  {
+    const bool Aend = ait == Aindex.cend();
+    const bool Bend = bit == Bindex.cend();
+    if(Aend && Bend) {
+      break;
     }
-  }
-  for(const auto & bit : Bindex) {
-    auto ait = Aindex.find(bit.first);
-    if(ait == Aindex.end()) {
-      result << bit.first << ",," << bit.second->m_str << "\n";
+    if(!Aend && !Bend) {
+      if(ait->first < bit->first) diffA();
+      else diffB();
     }
+    else if(!Aend) diffA();
+    else if(!Bend) diffB();
   }
   result << "OK\n";
   return result.str();
