@@ -30,27 +30,27 @@ TEST(simpledb, input1) {
     EXPECT_EQ(sdb.exec("INSERT B 7 wonder"), "OK\n");
     EXPECT_EQ(sdb.exec("INSERT B 8 selection"), "OK\n");
     EXPECT_EQ(sdb.exec("INTERSECTION"),
-              "3,violation,proposal\n"
-              "4,quality,example\n"
               "5,precision,lake\n"
+              "4,quality,example\n"
+              "3,violation,proposal\n"
               "OK\n");
     EXPECT_EQ(sdb.exec("SYMMETRIC_DIFFERENCE"),
-              "0,lean,\n"
-              "1,sweater,\n"
               "2,frank,\n"
-              "6,,flour\n"
-              "7,,wonder\n"
+              "1,sweater,\n"
+              "0,lean,\n"
               "8,,selection\n"
+              "7,,wonder\n"
+              "6,,flour\n"
               "OK\n");
     EXPECT_EQ(sdb.exec("TRUNCATE A"), "OK\n");
     EXPECT_EQ(sdb.exec("INTERSECTION"), "OK\n");
     EXPECT_EQ(sdb.exec("SYMMETRIC_DIFFERENCE"),
-              "3,,proposal\n"
-              "4,,example\n"
-              "5,,lake\n"
-              "6,,flour\n"
-              "7,,wonder\n"
               "8,,selection\n"
+              "7,,wonder\n"
+              "6,,flour\n"
+              "5,,lake\n"
+              "4,,example\n"
+              "3,,proposal\n"
               "OK\n");
   }
 }
