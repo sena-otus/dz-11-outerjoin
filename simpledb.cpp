@@ -29,6 +29,8 @@ SimpleDB::Table::index_t& SimpleDB::Table::index()
 
 std::string SimpleDB::Table::insert(Record &&rec)
 {
+    // INTERSECTIOM и SYMMETRIC_DIFFERENCE могут исполнятся
+    // TRUNCATE и INSERT заблокированы
   const std::lock_guard<std::mutex> guard(m_insMutex);
   auto &ref = m_reclist.emplace_front(rec);
   auto rez = m_index.insert(std::pair(ref.m_id, &ref));
@@ -41,7 +43,7 @@ std::string SimpleDB::Table::insert(Record &&rec)
 
 std::string SimpleDB::Table::truncate()
 {
-    // prevent any access
+    // эксклюзивный доступ
   const std::scoped_lock lock(m_insMutex, m_selMutex);
   m_reclist.clear();
   m_index.clear();
@@ -97,7 +99,7 @@ SimpleDB::intersection(const PCommand & /*cmd*/)
   const std::scoped_lock lockall(Alock, Block);
 
   {
-      // эксклюзивный доступ:
+      // эксклюзивный доступ на короткий срок, чтобы скопировать индексы
     const std::scoped_lock lock(A.insMutex(), B.insMutex());
       // копируем индексы, чтобы не зависеть от insert
     Aindex = A.index();
@@ -130,7 +132,7 @@ SimpleDB::sym_diff(const PCommand & /*cmd*/)
   const std::scoped_lock insert_lock(Alock, Block);
 
   {
-      // запретить insert и truncate:
+      // эксклюзивный доступ на короткий срок, чтобы скопировать индексы
     const std::scoped_lock exclusive_lock(A.insMutex(), B.insMutex());
       // копируем индексы, чтобы не зависеть от insert
     Aindex = A.index();
