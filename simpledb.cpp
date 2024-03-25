@@ -12,7 +12,7 @@ SimpleDB::SimpleDB()
   m_cmdmap["INSERT"              ] = [this](const PCommand &cmd){return insert      (cmd);};
   m_cmdmap["TRUNCATE"            ] = [this](const PCommand &cmd){return truncate    (cmd);};
   m_cmdmap["INTERSECTION"        ] = [this](const PCommand &cmd){return intersection(cmd);};
-  m_cmdmap["SYMMETRIC_DIFFERENCEw"] = [this](const PCommand &cmd){return sym_diff    (cmd);};
+  m_cmdmap["SYMMETRIC_DIFFERENCE"] = [this](const PCommand &cmd){return sym_diff    (cmd);};
   m_table["A"];  // create table A
   m_table["B"];  // create table B
 }
