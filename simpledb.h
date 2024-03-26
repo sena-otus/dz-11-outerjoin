@@ -83,6 +83,8 @@ public:
      * */
   std::string insert(const PCommand &cmd);
     /** @brief очистка таблицы
+     * Требует эксклюзивный доступ к таблице, поэтому будет ждать
+     * окончания команд INTERSECTION, SYMMETRIC_DIFFERENCE, INSERT
      * @param cmd аргументы <имя_таблицы>
      * @return сообщение об ошибке или OK при успехе
      * */
