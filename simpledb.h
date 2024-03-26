@@ -13,7 +13,7 @@
 /** @brief простейшая СУБД */
 class SimpleDB
 {
-    /** @brief запись (структура) базы таблиц */
+    /** @brief запись (структура) таблиц */
   struct Record
   {
     int m_id;
